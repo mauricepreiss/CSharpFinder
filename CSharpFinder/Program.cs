@@ -33,8 +33,13 @@ namespace CSharpFinder
             // Anzeigeeinstellungen
             Console.Title = "CSharp Finder";
             Console.ForegroundColor = ConsoleColor.DarkRed;
-            Console.WindowWidth = Console.WindowWidth + 40;
-            Console.WindowHeight = Console.WindowHeight + 10;
+
+            try
+            {
+                Console.WindowWidth = Console.WindowWidth + 40;
+                Console.WindowHeight = Console.WindowHeight + 10;
+            }
+            catch { }
 
             // Programmtitel
             Console.WriteLine();
