@@ -22,7 +22,7 @@ namespace CSharpFinder
             int errorCount = 0; // Anzahl fehlerhafter / nicht verschobener Dateien
             bool someFilesNotCoppied = false; // Wurden manche Dateien nicht kopiert?
 
-            string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", $"log-{DateTime.Now.ToString("yyyy-dd-MM")}");
+            string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", $"log-{DateTime.Now:yyyy-dd-MM}.txt");
             Logger logger = new Logger(logPath);
 
 
@@ -33,8 +33,8 @@ namespace CSharpFinder
             // Anzeigeeinstellungen
             Console.Title = "CSharp Finder";
             Console.ForegroundColor = ConsoleColor.DarkRed;
-            Console.WindowWidth = Console.WindowWidth + 40;
-            Console.WindowHeight = Console.WindowHeight + 10;
+            Console.WindowWidth += 40;
+            Console.WindowHeight += 10;
 
             // Programmtitel
             Console.WriteLine();

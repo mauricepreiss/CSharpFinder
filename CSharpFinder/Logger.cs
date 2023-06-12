@@ -1,10 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Globalization;
 
 namespace CSharpFinder
 {
@@ -34,7 +29,7 @@ namespace CSharpFinder
         {
             using (StreamWriter sw = File.AppendText(logFilePath))
             {
-                sw.WriteLine($"INFO | {DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")} | {message}");
+                sw.WriteLine($"INFO | {DateTime.Now:dd-MM-yyyy HH:mm:ss} | {message}");
             }
         }
 
@@ -42,7 +37,7 @@ namespace CSharpFinder
         {
             using (StreamWriter sw = File.AppendText(logFilePath))
             {
-                sw.WriteLine($"ERROR | {DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")} | {message}");
+                sw.WriteLine($"ERROR | {DateTime.Now:dd-MM-yyyy HH:mm:ss} | {message}");
             }
         }
     }
