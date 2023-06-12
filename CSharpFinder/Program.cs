@@ -36,8 +36,8 @@ namespace CSharpFinder
 
             try
             {
-                Console.WindowWidth = Console.WindowWidth + 40;
-                Console.WindowHeight = Console.WindowHeight + 10;
+                Console.WindowWidth += 40;
+                Console.WindowHeight += 10;
             }
             catch { }
 
