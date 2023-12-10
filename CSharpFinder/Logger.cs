@@ -3,14 +3,15 @@ using System.IO;
 
 namespace CSharpFinder
 {
-    public class Logger
+    internal class Logger
     {
-        private readonly string logFilePath;
+        private readonly string _logFilePath;
+        private string _callingMethod;
 
-        public Logger(string filePath)
+        internal Logger(string filePath)
         {
-            logFilePath = filePath;
-            string directory = new FileInfo(logFilePath).Directory.FullName;
+            _logFilePath = filePath;
+            string directory = new FileInfo(_logFilePath).Directory.FullName;
 
             // Prüfen ob Verzeichnis existiert
             if (!Directory.Exists(directory))
@@ -19,25 +20,52 @@ namespace CSharpFinder
             }
 
             // Prüfen ob Datei existiert
-            if (!File.Exists(logFilePath))
+            if (!File.Exists(_logFilePath))
             {
-                File.Create(logFilePath).Close();
+                File.Create(_logFilePath).Close();
             }
         }
 
-        public void Info(string message)
+        internal void Info(string message)
         {
-            using (StreamWriter sw = File.AppendText(logFilePath))
+            _callingMethod = GetCallingMethod();
+            using (StreamWriter sw = File.AppendText(_logFilePath))
             {
-                sw.WriteLine($"INFO | {DateTime.Now:dd-MM-yyyy HH:mm:ss} | {message}");
+                sw.WriteLine($"INFO | {DateTime.Now:dd-MM-yyyy HH:mm:ss} {_callingMethod} {message}");
             }
         }
 
-        public void Error(string message)
+        internal void Error(string message)
         {
-            using (StreamWriter sw = File.AppendText(logFilePath))
+            _callingMethod = GetCallingMethod();
+            using (StreamWriter sw = File.AppendText(_logFilePath))
             {
-                sw.WriteLine($"ERROR | {DateTime.Now:dd-MM-yyyy HH:mm:ss} | {message}");
+                sw.WriteLine($"ERROR | {DateTime.Now:dd-MM-yyyy HH:mm:ss} {_callingMethod} {message}");
+            }
+        }
+
+        internal void Error(string message, Exception exception)
+        {
+            _callingMethod = GetCallingMethod();
+            using (StreamWriter sw = File.AppendText(_logFilePath))
+            {
+                sw.WriteLine($"ERROR | {DateTime.Now:dd-MM-yyyy HH:mm:ss} {_callingMethod} {exception.GetType()} | {message}");
+            }
+        }
+
+        private string GetCallingMethod()
+        {
+            try
+            {
+                var stackTrace = new System.Diagnostics.StackTrace();
+                var callingFrame = stackTrace.GetFrame(2); // 2, um die aufrufende Methode zu erhalten
+                var callingMethod = callingFrame.GetMethod();
+                return $"| {callingMethod.DeclaringType.Name}.{callingMethod.Name} |";
+            }
+            catch (Exception ex)
+            {
+                Error("Logger.GetCallingMethod: " + ex.Message, ex);
+                return " | ";
             }
         }
     }
