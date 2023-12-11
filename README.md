@@ -40,11 +40,33 @@ If there is any errors, the program will ask you if you want to open the log fil
 [Here](https://github.com/mauricepreiss/CSharpFinder/blob/master/CSharpFinder/Program.cs#L523)
  is one of the many function how the program identifies a file as a c# / .net assembly:
 ```C#
-private static bool IsCSharpAssembly(Assembly assembly)
+private static bool IsGeneratedOrSystemAssembly(Assembly assembly)
 {
-    return assembly.GetCustomAttributes(typeof(CompilerGeneratedAttribute), inherit: false).Any() || 
-    assembly.GetTypes().Any(type => type.GetCustomAttributes(typeof(CompilerGeneratedAttribute), inherit: false).Any() || 
-    type.FullName?.StartsWith("System", StringComparison.Ordinal) == false);
+    try
+    {
+        var types = assembly.GetTypes();
+
+        if (types.Any(type => type.FullName?.StartsWith("System", StringComparison.Ordinal) == false))
+        {
+            return true;
+        }
+
+        if (assembly.GetTypes().Any(type => type.GetCustomAttributes(typeof(CompilerGeneratedAttribute), inherit: false).Any()))
+        {
+            return true;
+        }
+
+        if (assembly.GetCustomAttributes(typeof(CompilerGeneratedAttribute), inherit: false).Any())
+        {
+            return true;
+        }
+
+        return false;
+    }
+    catch
+    {
+        return false;
+    }
 }
 ```
 This will be expanded in the future so more checks will be added.
