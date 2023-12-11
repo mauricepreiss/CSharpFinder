@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace CSharpFinder
 {
@@ -15,6 +16,8 @@ namespace CSharpFinder
         private static readonly Logger logger = new Logger(_logPath);
         private static bool consoleResized = false;
         private static bool errorOccured = false;
+        private static bool gotValidAnswer = false;
+        private static ConsoleKeyInfo info;
 
         static void Main(string[] args)
         {
@@ -35,8 +38,13 @@ namespace CSharpFinder
 
 
             // Anzeigeeinstellungen
-            Console.Title = "CSharp Finder";
+            Console.Title = "CSharp Finder v" + Assembly.GetExecutingAssembly().GetName().Version.ToString();
             Console.ForegroundColor = ConsoleColor.DarkRed;
+
+            if (Environment.Is64BitProcess)
+            {
+                Console.Title += " (64-bit Windows)";
+            }
 
             try
             {
@@ -62,21 +70,30 @@ namespace CSharpFinder
             // ============================================
 
 
-            Console.ForegroundColor = ConsoleColor.Gray;
-            Console.Write("> Bitte geben sie den Pfad des Verzeichnisses ein, dass auf C#-Dateien untersucht werden soll: ");
-            Console.ForegroundColor = ConsoleColor.White;
-            string dirPath = Console.ReadLine();
-
             // Prüfen ob Pfad gefüllt
-            if (string.IsNullOrEmpty(dirPath))
+            string dirPath = "";
+            do
             {
-                WriteErrorLine("Bitte geben sie einen Pfad an!!");
-            }
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Console.Write("> Bitte geben sie den Pfad des Verzeichnisses ein, dass auf C#-Dateien untersucht werden soll: ");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                dirPath = Console.ReadLine();
+                if (!string.IsNullOrEmpty(dirPath))
+                {
+                    gotValidAnswer = true;
+                }
+                else
+                {
+                    WriteErrorLine("Bitte geben sie einen Pfad an!!", false);
+                    gotValidAnswer = false;
+                }
+            } while (!gotValidAnswer);
 
             // Prüfen ob Zielverzeichnis existiert
             if (!Directory.Exists(dirPath))
             {
-                WriteErrorLine("Dieses Verzeichnis existiert nicht. Bitte wählen sie en anderes Verzeichnis aus!!!");
+                WriteErrorLine("Dieses Verzeichnis existiert nicht. Bitte wählen sie en anderes Verzeichnis aus!");
             }
 
             // Dateien auflisten
@@ -93,7 +110,7 @@ namespace CSharpFinder
 
                 // Startmeldung
                 Console.ForegroundColor = ConsoleColor.Blue;
-                Console.WriteLine("Dateien werden gesucht...");
+                Console.WriteLine("\n[INFO]: Dateien werden gesucht...");
 
                 // Zielverzeichnis für kopierte Dateien
                 string resultDirPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "result");
@@ -125,16 +142,57 @@ namespace CSharpFinder
 
 
                 // ============================================
-                // ============= Dateien prüfen  ==============
+                // ============ Dateien kopieren  =============
                 // ============================================
 
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("[INFO]: Dateien werden kopiert...");
+                gotValidAnswer = false;
+                info = new ConsoleKeyInfo();
+                bool copyFiles = false;
 
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Console.WriteLine("\n> Möchten Sie diese Dateien kopieren? [Y/N]");
+
+                do
+                {
+                    info = Console.ReadKey();
+                    Console.WriteLine("\b");
+
+                    switch (info.Key)
+                    {
+                        case (ConsoleKey.Y):
+                            copyFiles = true;
+                            gotValidAnswer = true;
+                            break;
+                        case (ConsoleKey.N):
+                            copyFiles = false;
+                            gotValidAnswer = true;
+                            break;
+                        default:
+                            Console.WriteLine();
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Keine gültige Eingabe!");
+                            gotValidAnswer = false;
+                            break;
+                    }
+                } while (!gotValidAnswer);
+
+                if (!copyFiles)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("\nEs wurde keine Aktion ausgeführt. Das Programm wird automatisch geschlossen...");
+                    Thread.Sleep(2500);
+                    Environment.Exit(0);
+                }
+
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("\n[INFO]: Dateien werden kopiert...");
+
+                // Dateien durchlaufen
                 foreach (string file in files)
                 {
                     try
                     {
+                        // Prüfen auf C# / .NET Datei
                         if (IsCSharpAssembly(file))
                         {
                             // Kompletten Pfad bekommen, Datei in Liste hinzufügen
@@ -191,16 +249,17 @@ namespace CSharpFinder
                 // ============================================
 
 
-                bool gotValidAnswer = false;
-                ConsoleKeyInfo info = new ConsoleKeyInfo();
+                gotValidAnswer = false;
+                info = new ConsoleKeyInfo();
 
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Gray;
-                Console.WriteLine("Möchten Sie das Kopierverzeichnis öffnen? [Y/N]");
+                Console.WriteLine("\n> Möchten Sie das Kopierverzeichnis öffnen? [Y/N]");
 
                 do
                 {
                     info = Console.ReadKey();
+                    Console.WriteLine("\b");
 
                     switch (info.Key)
                     {
@@ -231,13 +290,15 @@ namespace CSharpFinder
                 {
                     gotValidAnswer = false;
                     info = new ConsoleKeyInfo();
+
                     Console.WriteLine();
                     Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.WriteLine("Möchten Sie die Log-Datei öffnen? [Y/N]");
+                    Console.WriteLine("\n> Möchten Sie die Log-Datei öffnen? [Y/N]");
 
                     do
                     {
                         info = Console.ReadKey();
+                        Console.WriteLine("\b");
 
                         switch (info.Key)
                         {
@@ -264,11 +325,12 @@ namespace CSharpFinder
                 info = new ConsoleKeyInfo();
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Gray;
-                Console.WriteLine("Möchten Sie versuchen, die kopierten Dateien so klein wie möglich zu komprimieren? (Beta) [Y/N]");
+                Console.WriteLine("\n> Möchten Sie versuchen, die kopierten Dateien so klein wie möglich zu komprimieren? (Beta) [Y/N]");
 
                 do
                 {
                     info = Console.ReadKey();
+                    Console.WriteLine("\b");
 
                     switch (info.Key)
                     {
@@ -290,34 +352,39 @@ namespace CSharpFinder
                     }
                 } while (!gotValidAnswer);
 
-                // Komprimierte Dateien anzeigen?
-                gotValidAnswer = false;
-                info = new ConsoleKeyInfo();
-                Console.WriteLine();
-                Console.ForegroundColor = ConsoleColor.Gray;
-                Console.WriteLine("Möchten Sie das Verzeichnis der komprimierten Dateien öffnen? [Y/N]");
-
-                do
+                // Prüfen ob Dateien komprimiert wurden?
+                if (compressFiles)
                 {
-                    info = Console.ReadKey();
+                    // Komprimierte Dateien anzeigen?
+                    gotValidAnswer = false;
+                    info = new ConsoleKeyInfo();
+                    Console.WriteLine();
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                    Console.WriteLine("\n> Möchten Sie das Verzeichnis der komprimierten Dateien öffnen? [Y/N]");
 
-                    switch (info.Key)
+                    do
                     {
-                        case (ConsoleKey.Y):
-                            Process.Start(Path.Combine(resultDirPath, "compressed"));
-                            gotValidAnswer = true;
-                            break;
-                        case (ConsoleKey.N):
-                            gotValidAnswer = true;
-                            break;
-                        default:
-                            Console.WriteLine();
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Keine gültige Eingabe!");
-                            gotValidAnswer = false;
-                            break;
-                    }
-                } while (!gotValidAnswer);
+                        info = Console.ReadKey();
+                        Console.WriteLine("\b");
+
+                        switch (info.Key)
+                        {
+                            case (ConsoleKey.Y):
+                                Process.Start(Path.Combine(resultDirPath, "compressed"));
+                                gotValidAnswer = true;
+                                break;
+                            case (ConsoleKey.N):
+                                gotValidAnswer = true;
+                                break;
+                            default:
+                                Console.WriteLine();
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("Keine gültige Eingabe!");
+                                gotValidAnswer = false;
+                                break;
+                        }
+                    } while (!gotValidAnswer);
+                }
 
                 Environment.Exit(0);
             }
@@ -352,7 +419,7 @@ namespace CSharpFinder
                         using (GZipStream compressionStream = new GZipStream(compressedFileStream, CompressionMode.Compress))
                         {
                             originalFileStream.CopyTo(compressionStream);
-                            Console.WriteLine("Datei komprimiert/kopiert zu: " + compressedFile);
+                            Console.WriteLine("Datei komprimiert/kopiert zu: " + compressedFile.Replace(filePath, "..."));
                         }
                     }
                 }
@@ -361,12 +428,18 @@ namespace CSharpFinder
             Console.WriteLine("[INFO]: Dateien kopiert. Nutzen sie 7Zip oder andere Tools, um die Dateien wieder zu dekomprimieren.");
         }
 
-        private static void WriteErrorLine(string message)
+        private static void WriteErrorLine(string message, bool restart = true)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(message);
+            Console.WriteLine("[ERROR]: " + message);
             Console.ReadKey();
-            Main(new string[0]);
+
+            // Prüfen auf geforderten Restart
+            if (restart)
+            {
+                Console.Clear();
+                Main(new string[0]);
+            }
         }
 
         private static bool IsCSharpAssembly(string assemblyLocation)
