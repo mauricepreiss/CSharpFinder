@@ -37,8 +37,8 @@ After the summary the program will ask you if you want to open the "result" dire
 If there is any errors, the program will ask you if you want to open the log file. The program created log files for errors. They will be stored in the programs directory in subdirectory "logs". The log file will be created new for every day.
 
 ## Code
-[Here](https://github.com/mauricepreiss/CSharpFinder/blob/master/CSharpFinder/Program.cs#L260)
- is the code on how to program identifies a file as a c# assembly:
+[Here](https://github.com/mauricepreiss/CSharpFinder/blob/master/CSharpFinder/Program.cs#L523)
+ is one of the many function how the program identifies a file as a c# / .net assembly:
 ```C#
 private static bool IsCSharpAssembly(Assembly assembly)
 {
